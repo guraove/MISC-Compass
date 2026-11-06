@@ -15,6 +15,9 @@ with tempfile.TemporaryDirectory() as d:
     assert "Embedded signature at offset 8190 (0x1FFE): PNG image" in out, out
     p.write_bytes(b"\x89PNG\r\n\x1a\n")
     assert "Embedded signature at offset" not in run(p).stdout
+    p.write_bytes(b"hello world\0" + b"\x89PNG\r\n\x1a\n" + b"another string")
+    out = run(p).stdout
+    assert out.index("hello world") < out.index("another string") < out.index("Embedded signatures (first 10):") < out.index("Embedded signature at offset"), out
     assert run().returncode == 2
     assert run("--help").returncode == 0
     assert run(pathlib.Path(d) / "missing").returncode == 1
