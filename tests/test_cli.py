@@ -18,6 +18,11 @@ with tempfile.TemporaryDirectory() as d:
     p.write_bytes(b"hello world\0" + b"\x89PNG\r\n\x1a\n" + b"another string")
     out = run(p).stdout
     assert out.index("hello world") < out.index("another string") < out.index("Embedded signatures (first 10):") < out.index("Embedded signature at offset"), out
+    for count in (9, 10, 11):
+        p.write_bytes(b"\0" + b"PK\x03\x04\0" * count)
+        out = run(p).stdout
+        assert out.count("Embedded signature at offset") == min(count, 10), out
+        assert ("Additional signatures omitted" in out) == (count > 10), out
     assert run().returncode == 2
     assert run("--help").returncode == 0
     assert run(pathlib.Path(d) / "missing").returncode == 1
