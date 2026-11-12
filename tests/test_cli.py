@@ -23,6 +23,11 @@ with tempfile.TemporaryDirectory() as d:
         out = run(p).stdout
         assert out.count("Embedded signature at offset") == min(count, 10), out
         assert ("Additional signatures omitted" in out) == (count > 10), out
+    for count in (9, 10, 11):
+        for ending in (b"", b"\0"):
+            p.write_bytes(b"\0".join([b"abcd"] * count) + ending)
+            out = run(p).stdout
+            assert ("Additional strings omitted" in out) == (count > 10), out
     assert run().returncode == 2
     assert run("--help").returncode == 0
     assert run(pathlib.Path(d) / "missing").returncode == 1

@@ -22,13 +22,13 @@ static const Signature sigs[]={
  {pe,sizeof pe,"Possible DOS/PE executable","Inspect headers without executing the file; MZ alone does not confirm PE."},
  {wav,sizeof wav,"RIFF container","Inspect the container subtype at offset 8 (e.g. WAVE or WEBP)."}
 };
-static void usage(const char *exe) { printf("MISC-Compass 0.2.2\nUsage: %s <file>\n       %s --help\n",exe,exe); }
+static void usage(const char *exe) { printf("MISC-Compass 0.2.3\nUsage: %s <file>\n       %s --help\n",exe,exe); }
 int main(int argc,char **argv) {
- FILE *f; unsigned char buf[8192], head[16]; size_t n,i,hn=0; unsigned long long count=0, freq[256]={0}, printable=0, run=0; double entropy=0; const Signature *match=NULL; char sample[81]; size_t sl=0; int shown=0; unsigned char window[8]={0}; size_t wn=0; int embedded=0, more_embedded=0; const Signature *found[10]; unsigned long long offsets[10];
+ FILE *f; unsigned char buf[8192], head[16]; size_t n,i,hn=0; unsigned long long count=0, freq[256]={0}, printable=0, run=0; double entropy=0; const Signature *match=NULL; char sample[81]; size_t sl=0; int shown=0, more_strings=0; unsigned char window[8]={0}; size_t wn=0; int embedded=0, more_embedded=0; const Signature *found[10]; unsigned long long offsets[10];
  if(argc==2 && (!strcmp(argv[1],"--help") || !strcmp(argv[1],"-h"))) {usage(argv[0]); return 0;}
  if(argc!=2) {usage(argv[0]); return 2;}
  f=fopen(argv[1],"rb"); if(!f) {perror("Cannot open file"); return 1;}
- puts("MISC-Compass 0.2.2 | offline, read-only analysis");
+ puts("MISC-Compass 0.2.3 | offline, read-only analysis");
  puts("Printable ASCII strings (first 10, minimum 4 characters; truncated at 80):");
  while((n=fread(buf,1,sizeof buf,f))>0) for(i=0;i<n;i++) {
   unsigned char c=buf[i];
@@ -50,11 +50,12 @@ int main(int argc,char **argv) {
   }
   if(hn<sizeof head) head[hn++]=c; freq[c]++; count++;
   if(c>=32 && c<=126) {printable++; run++; if(sl<80) sample[sl++]=(char)c;}
-  else {if(run>=4 && shown<10) {sample[sl]='\0'; printf("  %s%s\n",sample,run>80?"...":""); shown++;} run=0; sl=0;}
+  else {if(run>=4) { if(shown<10) {sample[sl]='\0'; printf("  %s%s\n",sample,run>80?"...":""); shown++;} else more_strings=1; } run=0; sl=0;}
  }
  if(ferror(f)) {fputs("Error reading file.\n",stderr); fclose(f); return 1;}
- if(run>=4 && shown<10) {sample[sl]='\0'; printf("  %s%s\n",sample,run>80?"...":""); shown++;}
+ if(run>=4) { if(shown<10) {sample[sl]='\0'; printf("  %s%s\n",sample,run>80?"...":""); shown++;} else more_strings=1; }
  if(!shown) puts("  (none)");
+ if(more_strings) puts("  Additional strings omitted after the first 10.");
  puts("\nEmbedded signatures (first 10):");
  if(!embedded) puts("  (none)");
  for(i=0;i<(size_t)embedded;i++) printf("  Embedded signature at offset %llu (0x%llX): %s\n",offsets[i],offsets[i],found[i]->name);
