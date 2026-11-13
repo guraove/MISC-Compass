@@ -28,6 +28,13 @@ with tempfile.TemporaryDirectory() as d:
             p.write_bytes(b"\0".join([b"abcd"] * count) + ending)
             out = run(p).stdout
             assert ("Additional strings omitted" in out) == (count > 10), out
+    sig7z = b"\x37\x7a\xbc\xaf\x27\x1c"
+    p.write_bytes(sig7z)
+    assert "Possible type: 7z archive" in run(p).stdout
+    p.write_bytes(b"x" * 8190 + sig7z)
+    assert "Embedded signature at offset 8190 (0x1FFE): 7z archive" in run(p).stdout
+    p.write_bytes(sig7z[:-1])
+    assert "Possible type: 7z archive" not in run(p).stdout
     assert run().returncode == 2
     assert run("--help").returncode == 0
     assert run(pathlib.Path(d) / "missing").returncode == 1

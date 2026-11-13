@@ -6,7 +6,9 @@
 /* Signatures are hints, not proof that a file is valid. */
 typedef struct { const unsigned char *bytes; size_t length; const char *name; const char *next; } Signature;
 static const unsigned char png[]={0x89,'P','N','G',13,10,26,10}, jpg[]={0xff,0xd8,0xff}, zip[]={'P','K',3,4}, zip_empty[]={'P','K',5,6}, zip_span[]={'P','K',7,8}, pdf[]={'%','P','D','F','-'}, gif87[]={'G','I','F','8','7','a'}, gif89[]={'G','I','F','8','9','a'}, gz[]={0x1f,0x8b}, rar4[]={'R','a','r','!',0x1a,7,0}, rar5[]={'R','a','r','!',0x1a,7,1,0}, elf[]={0x7f,'E','L','F'}, pe[]={'M','Z'}, wav[]={'R','I','F','F'};
+static const unsigned char sevenzip[]={0x37,0x7a,0xbc,0xaf,0x27,0x1c};
 static const Signature sigs[]={
+ {sevenzip,sizeof sevenzip,"7z archive","List archive entries before extracting."},
  {png,sizeof png,"PNG image","Inspect metadata and image dimensions; check for extra data after IEND."},
  {jpg,sizeof jpg,"JPEG image","Inspect EXIF metadata and check for data after the end marker."},
  {zip,sizeof zip,"ZIP archive","List archive entries before extracting; Office documents may also use ZIP."},
@@ -22,13 +24,13 @@ static const Signature sigs[]={
  {pe,sizeof pe,"Possible DOS/PE executable","Inspect headers without executing the file; MZ alone does not confirm PE."},
  {wav,sizeof wav,"RIFF container","Inspect the container subtype at offset 8 (e.g. WAVE or WEBP)."}
 };
-static void usage(const char *exe) { printf("MISC-Compass 0.2.3\nUsage: %s <file>\n       %s --help\n",exe,exe); }
+static void usage(const char *exe) { printf("MISC-Compass 0.2.4\nUsage: %s <file>\n       %s --help\n",exe,exe); }
 int main(int argc,char **argv) {
  FILE *f; unsigned char buf[8192], head[16]; size_t n,i,hn=0; unsigned long long count=0, freq[256]={0}, printable=0, run=0; double entropy=0; const Signature *match=NULL; char sample[81]; size_t sl=0; int shown=0, more_strings=0; unsigned char window[8]={0}; size_t wn=0; int embedded=0, more_embedded=0; const Signature *found[10]; unsigned long long offsets[10];
  if(argc==2 && (!strcmp(argv[1],"--help") || !strcmp(argv[1],"-h"))) {usage(argv[0]); return 0;}
  if(argc!=2) {usage(argv[0]); return 2;}
  f=fopen(argv[1],"rb"); if(!f) {perror("Cannot open file"); return 1;}
- puts("MISC-Compass 0.2.3 | offline, read-only analysis");
+ puts("MISC-Compass 0.2.4 | offline, read-only analysis");
  puts("Printable ASCII strings (first 10, minimum 4 characters; truncated at 80):");
  while((n=fread(buf,1,sizeof buf,f))>0) for(i=0;i<n;i++) {
   unsigned char c=buf[i];
