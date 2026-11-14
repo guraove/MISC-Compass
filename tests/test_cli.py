@@ -28,6 +28,13 @@ with tempfile.TemporaryDirectory() as d:
             p.write_bytes(b"\0".join([b"abcd"] * count) + ending)
             out = run(p).stdout
             assert ("Additional strings omitted" in out) == (count > 10), out
+    p.write_bytes(b"")
+    out = run(p).stdout
+    assert "ASCII printable bytes: unavailable (empty file)" in out
+    assert "Entropy: unavailable (empty file)" in out
+    p.write_bytes(b"AAAA")
+    out = run(p).stdout
+    assert "ASCII printable bytes: 100.0%" in out and "Entropy: 0.000 bits/byte" in out
     sig7z = b"\x37\x7a\xbc\xaf\x27\x1c"
     p.write_bytes(sig7z)
     assert "Possible type: 7z archive" in run(p).stdout
