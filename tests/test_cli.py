@@ -49,6 +49,12 @@ with tempfile.TemporaryDirectory() as d:
     assert "Embedded signature at offset 8190 (0x1FFE): XZ stream" in run(p).stdout
     p.write_bytes(sigxz[:-1])
     assert "Possible type: XZ stream" not in run(p).stdout
+    p.write_bytes(b"\0" * 8190 + b"hello world")
+    out = run(p).stdout
+    assert "[offset 8190 (0x1FFE)] hello world" in out, out
+    p.write_bytes(b"hello\0world\0")
+    out = run(p).stdout
+    assert "[offset 0 (0x0)] hello" in out and "[offset 6 (0x6)] world" in out, out
     assert run().returncode == 2
     assert run("--help").returncode == 0
     assert run(pathlib.Path(d) / "missing").returncode == 1
