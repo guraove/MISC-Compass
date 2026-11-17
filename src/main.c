@@ -26,13 +26,13 @@ static const Signature sigs[]={
  {pe,sizeof pe,"Possible DOS/PE executable","Inspect headers without executing the file; MZ alone does not confirm PE."},
  {wav,sizeof wav,"RIFF container","Inspect the container subtype at offset 8 (e.g. WAVE or WEBP)."}
 };
-static void usage(const char *exe) { printf("MISC-Compass 0.2.7\nUsage: %s <file>\n       %s --help\n",exe,exe); }
+static void usage(const char *exe) { printf("MISC-Compass 0.2.8\nUsage: %s <file>\n       %s --help\n",exe,exe); }
 int main(int argc,char **argv) {
  FILE *f; unsigned char buf[8192], head[16]; size_t n,i,hn=0; unsigned long long count=0, freq[256]={0}, printable=0, run=0, string_offset=0; double entropy=0; const Signature *match=NULL; char sample[81]; size_t sl=0; int shown=0, more_strings=0; unsigned char window[8]={0}; size_t wn=0; int embedded=0, more_embedded=0; const Signature *found[10]; unsigned long long offsets[10];
  if(argc==2 && (!strcmp(argv[1],"--help") || !strcmp(argv[1],"-h"))) {usage(argv[0]); return 0;}
  if(argc!=2) {usage(argv[0]); return 2;}
  f=fopen(argv[1],"rb"); if(!f) {perror("Cannot open file"); return 1;}
- puts("MISC-Compass 0.2.7 | offline, read-only analysis");
+ puts("MISC-Compass 0.2.8 | offline, read-only analysis");
  puts("Printable ASCII strings (first 10, minimum 4 characters; truncated at 80):");
  while((n=fread(buf,1,sizeof buf,f))>0) for(i=0;i<n;i++) {
   unsigned char c=buf[i];
@@ -68,7 +68,13 @@ int main(int argc,char **argv) {
  for(i=0;i<sizeof sigs/sizeof sigs[0];i++) if(hn>=sigs[i].length && !memcmp(head,sigs[i].bytes,sigs[i].length)) {match=&sigs[i]; break;}
  for(i=0;i<256;i++) if(freq[i] && count) {double p=(double)freq[i]/(double)count; entropy-=p*log(p)/log(2.0);}
  printf("\nSize: %llu bytes\nHeader:",count); for(i=0;i<hn;i++) printf(" %02X",head[i]); if(!hn) printf(" (empty)");
- printf("\nPossible type: %s\n",match?match->name:"unknown");
+ if(match && match->bytes==wav && hn>=12 && !memcmp(head+8,"WAVE",4))
+  puts("\nPossible type: RIFF/WAVE audio");
+ else if(match && match->bytes==wav && hn>=12 && !memcmp(head+8,"WEBP",4))
+  puts("\nPossible type: RIFF/WEBP image");
+ else if(match && match->bytes==wav && hn>=12 && !memcmp(head+8,"AVI ",4))
+  puts("\nPossible type: RIFF/AVI video");
+ else printf("\nPossible type: %s\n",match?match->name:"unknown");
  if(count) printf("ASCII printable bytes: %.1f%%\nEntropy: %.3f bits/byte\n",100.0*(double)printable/(double)count,entropy);
  else puts("ASCII printable bytes: unavailable (empty file)\nEntropy: unavailable (empty file)");
  puts("Embedded signatures are byte-pattern clues only; matches may be coincidental and are capped at 10.");

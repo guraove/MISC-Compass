@@ -55,6 +55,11 @@ with tempfile.TemporaryDirectory() as d:
     p.write_bytes(b"hello\0world\0")
     out = run(p).stdout
     assert "[offset 0 (0x0)] hello" in out and "[offset 6 (0x6)] world" in out, out
+    for subtype, expected in [(b"WAVE", "RIFF/WAVE audio"), (b"WEBP", "RIFF/WEBP image"), (b"AVI ", "RIFF/AVI video"), (b"????", "RIFF container")]:
+        p.write_bytes(b"RIFF" + b"\0" * 4 + subtype)
+        assert "Possible type: " + expected in run(p).stdout
+    p.write_bytes(b"RIFF")
+    assert "Possible type: RIFF container" in run(p).stdout
     assert run().returncode == 2
     assert run("--help").returncode == 0
     assert run(pathlib.Path(d) / "missing").returncode == 1
