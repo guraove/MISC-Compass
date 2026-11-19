@@ -26,13 +26,13 @@ static const Signature sigs[]={
  {pe,sizeof pe,"Possible DOS/PE executable","Inspect headers without executing the file; MZ alone does not confirm PE."},
  {wav,sizeof wav,"RIFF container","Inspect the container subtype at offset 8 (e.g. WAVE or WEBP)."}
 };
-static void usage(const char *exe) { printf("MISC-Compass 0.2.8\nUsage: %s <file>\n       %s --help\n",exe,exe); }
+static void usage(const char *exe) { printf("MISC-Compass 0.2.9\nUsage: %s <file>\n       %s --help\n",exe,exe); }
 int main(int argc,char **argv) {
  FILE *f; unsigned char buf[8192], head[16]; size_t n,i,hn=0; unsigned long long count=0, freq[256]={0}, printable=0, run=0, string_offset=0; double entropy=0; const Signature *match=NULL; char sample[81]; size_t sl=0; int shown=0, more_strings=0; unsigned char window[8]={0}; size_t wn=0; int embedded=0, more_embedded=0; const Signature *found[10]; unsigned long long offsets[10];
  if(argc==2 && (!strcmp(argv[1],"--help") || !strcmp(argv[1],"-h"))) {usage(argv[0]); return 0;}
  if(argc!=2) {usage(argv[0]); return 2;}
  f=fopen(argv[1],"rb"); if(!f) {perror("Cannot open file"); return 1;}
- puts("MISC-Compass 0.2.8 | offline, read-only analysis");
+ puts("MISC-Compass 0.2.9 | offline, read-only analysis");
  puts("Printable ASCII strings (first 10, minimum 4 characters; truncated at 80):");
  while((n=fread(buf,1,sizeof buf,f))>0) for(i=0;i<n;i++) {
   unsigned char c=buf[i];
@@ -80,6 +80,12 @@ int main(int argc,char **argv) {
  puts("Embedded signatures are byte-pattern clues only; matches may be coincidental and are capped at 10.");
  puts("\nWhy: file signatures compare bytes at offset 0; extensions can be misleading. A match does not validate the file.");
  puts("Entropy measures byte diversity, not encryption: compressed and random-looking data can also score high. Small files can be misleading.");
- printf("Next: %s\n",match?match->next:"Check the hex header, filename and strings; an unknown signature does not imply malicious content.");
+ if(match && match->bytes==wav && hn>=12 && !memcmp(head+8,"WAVE",4))
+  puts("Next: Inspect audio metadata and waveform or spectrogram.");
+ else if(match && match->bytes==wav && hn>=12 && !memcmp(head+8,"WEBP",4))
+  puts("Next: Inspect image metadata and animation frames.");
+ else if(match && match->bytes==wav && hn>=12 && !memcmp(head+8,"AVI ",4))
+  puts("Next: Inspect video metadata and streams.");
+ else printf("Next: %s\n",match?match->next:"Check the hex header, filename and strings; an unknown signature does not imply malicious content.");
  puts("Treat extracted strings as untrusted clues. Avoid running unknown files."); return 0;
 }
