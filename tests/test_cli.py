@@ -65,5 +65,7 @@ with tempfile.TemporaryDirectory() as d:
         assert hint in run(p).stdout
     assert run().returncode == 2
     assert run("--help").returncode == 0
+    version = run("--version")
+    assert version.returncode == 0 and version.stdout.strip() == "MISC-Compass 0.2.10"
     assert run(pathlib.Path(d) / "missing").returncode == 1
 print("CLI checks passed")

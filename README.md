@@ -1,6 +1,6 @@
 # MISC-Compass 🧭
 
-面向 CTF MISC 初学者的离线文件分析与学习引导工具。它读取文件、展示线索并解释判断依据，帮助你决定下一步检查什么。当前为 **0.2.9 版本**，使用 C99 编写，无网络请求，不执行、解压或修改待分析文件。
+面向 CTF MISC 初学者的离线文件分析与学习引导工具。它读取文件、展示线索并解释判断依据，帮助你决定下一步检查什么。当前为 **0.2.10 版本**，使用 C99 编写，无网络请求，不执行、解压或修改待分析文件。
 
 ## 能做什么
 
@@ -26,6 +26,7 @@ ctest --test-dir build -C Release --output-on-failure
 ```sh
 ./build/misc-compass path/to/challenge.bin
 ./build/misc-compass --help
+./build/misc-compass --version
 ```
 
 测试需要 Python 3；未安装 Python 时 CMake 不会注册测试。程序对文件流式读取，内存占用固定；大文件仍需完整读取，耗时随文件大小增长。
