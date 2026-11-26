@@ -63,7 +63,7 @@ with tempfile.TemporaryDirectory() as d:
     for subtype, hint in [(b"WAVE", "waveform or spectrogram"), (b"WEBP", "animation frames"), (b"AVI ", "video metadata and streams"), (b"????", "container subtype")]:
         p.write_bytes(b"RIFF" + b"\0" * 4 + subtype)
         assert hint in run(p).stdout
-    for data, expected in [(b"\x1f\x8b\x08", True), (b"\x1f\x8b", False), (b"\x1f\x8b\x00", False)]:
+    for data, expected in [(b"\x1f\x8b\x08\x00", True), (b"\x1f\x8b\x08\x1f", True), (b"\x1f\x8b\x08\x20", False), (b"\x1f\x8b\x08", False), (b"\x1f\x8b", False), (b"\x1f\x8b\x00", False)]:
         p.write_bytes(data)
         assert ("Possible type: gzip stream" in run(p).stdout) == expected
         p.write_bytes(b"X" * 8190 + data)
@@ -71,6 +71,6 @@ with tempfile.TemporaryDirectory() as d:
     assert run().returncode == 2
     assert run("--help").returncode == 0
     version = run("--version")
-    assert version.returncode == 0 and version.stdout.strip() == "MISC-Compass 0.2.11"
+    assert version.returncode == 0 and version.stdout.strip() == "MISC-Compass 0.2.12"
     assert run(pathlib.Path(d) / "missing").returncode == 1
 print("CLI checks passed")
