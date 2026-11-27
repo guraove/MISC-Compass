@@ -27,18 +27,18 @@ static const Signature sigs[]={
  {wav,sizeof wav,"RIFF container","Inspect the container subtype at offset 8 (e.g. WAVE or WEBP)."}
 };
 static int signature_matches(const Signature *sig, const unsigned char *data, size_t available) {
- size_t needed=sig->length + (sig->bytes==gz ? 1 : 0);
+ size_t needed=(sig->bytes==gz ? 10 : sig->length);
  return available>=needed && !memcmp(data,sig->bytes,sig->length) &&
         (sig->bytes!=gz || !(data[sig->length] & 0xe0));
 }
-static void usage(const char *exe) { printf("MISC-Compass 0.2.12\nUsage: %s <file>\n       %s --help\n       %s --version\n",exe,exe,exe); }
+static void usage(const char *exe) { printf("MISC-Compass 0.2.13\nUsage: %s <file>\n       %s --help\n       %s --version\n",exe,exe,exe); }
 int main(int argc,char **argv) {
- FILE *f; unsigned char buf[8192], head[16]; size_t n,i,hn=0; unsigned long long count=0, freq[256]={0}, printable=0, run=0, string_offset=0; double entropy=0; const Signature *match=NULL; char sample[81]; size_t sl=0; int shown=0, more_strings=0; unsigned char window[8]={0}; size_t wn=0; int embedded=0, more_embedded=0; const Signature *found[10]; unsigned long long offsets[10];
- if(argc==2 && !strcmp(argv[1],"--version")) { puts("MISC-Compass 0.2.12"); return 0; }
+ FILE *f; unsigned char buf[8192], head[16]; size_t n,i,hn=0; unsigned long long count=0, freq[256]={0}, printable=0, run=0, string_offset=0; double entropy=0; const Signature *match=NULL; char sample[81]; size_t sl=0; int shown=0, more_strings=0; unsigned char window[10]={0}; size_t wn=0; int embedded=0, more_embedded=0; const Signature *found[10]; unsigned long long offsets[10];
+ if(argc==2 && !strcmp(argv[1],"--version")) { puts("MISC-Compass 0.2.13"); return 0; }
  if(argc==2 && (!strcmp(argv[1],"--help") || !strcmp(argv[1],"-h"))) {usage(argv[0]); return 0;}
  if(argc!=2) {usage(argv[0]); return 2;}
  f=fopen(argv[1],"rb"); if(!f) {perror("Cannot open file"); return 1;}
- puts("MISC-Compass 0.2.12 | offline, read-only analysis");
+ puts("MISC-Compass 0.2.13 | offline, read-only analysis");
  puts("Printable ASCII strings (first 10, minimum 4 characters; truncated at 80):");
  while((n=fread(buf,1,sizeof buf,f))>0) for(i=0;i<n;i++) {
   unsigned char c=buf[i];
@@ -48,7 +48,7 @@ int main(int argc,char **argv) {
   if(!more_embedded) {
    size_t j;
    for(j=0;j<sizeof sigs/sizeof sigs[0];j++) {
-    size_t len=sigs[j].length + (sigs[j].bytes==gz ? 1 : 0);
+    size_t len=(sigs[j].bytes==gz ? 10 : sigs[j].length);
     if(wn>=len && count+1>len && signature_matches(&sigs[j],window+wn-len,len)) {
      if(embedded<10) {
       found[embedded]=&sigs[j]; offsets[embedded]=count+1-(unsigned long long)len;
