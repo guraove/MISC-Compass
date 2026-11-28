@@ -68,9 +68,14 @@ with tempfile.TemporaryDirectory() as d:
         assert ("Possible type: gzip stream" in run(p).stdout) == expected
         p.write_bytes(b"X" * 8190 + data)
         assert ("Embedded signature at offset 8190 (0x1FFE): gzip stream" in run(p).stdout) == expected
+    (pathlib.Path(d) / "--version").write_bytes(b"hello")
+    escaped = subprocess.run([exe, "--", "--version"], cwd=d, capture_output=True, text=True)
+    assert escaped.returncode == 0 and "Size: 5 bytes" in escaped.stdout
+    assert run("--", p).returncode == 0
+    assert run("--", p, p).returncode == 2
     assert run().returncode == 2
     assert run("--help").returncode == 0
     version = run("--version")
-    assert version.returncode == 0 and version.stdout.strip() == "MISC-Compass 0.2.13"
+    assert version.returncode == 0 and version.stdout.strip() == "MISC-Compass 0.2.14"
     assert run(pathlib.Path(d) / "missing").returncode == 1
 print("CLI checks passed")
